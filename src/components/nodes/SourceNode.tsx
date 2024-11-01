@@ -1,9 +1,10 @@
-import { Handle, Position } from '@xyflow/react'
 import type { Node, NodeProps } from '@xyflow/react'
+import { Handle, Position } from '@xyflow/react'
 import { useMemo } from 'react'
 
 export type SourceNodeData = {
   label: string
+  isEdgeMode: boolean
 }
 
 export type SourceNode = Node<SourceNodeData>
@@ -24,7 +25,11 @@ export default function SourceNode({ data }: NodeProps<SourceNode>) {
       <div className='p-3 px-8 rounded-3xl' style={{ color: randomBorderColor, backgroundColor: `rgba(26,26,36,0.8)` }}>
         __start__
       </div>
-      <Handle type='source' style={{ width: '10px', height: '10px' }} position={Position.Bottom} />
+      <Handle
+        type='source'
+        style={{ width: data.isEdgeMode ? '20px' : '10px', height: data.isEdgeMode ? '20px' : '10px' }}
+        position={Position.Bottom}
+      />
     </div>
   )
 }

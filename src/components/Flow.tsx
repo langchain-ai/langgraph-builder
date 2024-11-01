@@ -1,29 +1,30 @@
 'use client'
-import Image from 'next/image'
-import { useCallback, useState, useRef, useEffect } from 'react'
+import { useButtonText } from '@/contexts/ButtonTextContext'
+import { useEdgeLabel } from '@/contexts/EdgeLabelContext'
+import { Button, ModalDialog, Modal as MuiModal, Snackbar } from '@mui/joy'
 import {
   Background,
+  OnConnectStart,
   ReactFlow,
   addEdge,
-  useNodesState,
-  useEdgesState,
-  OnConnectStart,
-  type OnConnect,
   applyNodeChanges,
+  useEdgesState,
+  useNodesState,
   type Edge,
+  type OnConnect,
 } from '@xyflow/react'
-import { MarkerType } from 'reactflow'
 import '@xyflow/react/dist/style.css'
-import { initialNodes, nodeTypes, type CustomNodeType } from './nodes'
-import { initialEdges, edgeTypes, type CustomEdgeType } from './edges'
+import { X } from 'lucide-react'
+import Image from 'next/image'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { MarkerType } from 'reactflow'
 import { generateLanggraphCode } from '../codeGeneration/generateLanggraph'
 import { generateLanggraphJS } from '../codeGeneration/generateLanggraphJS'
 import { CodeGenerationResult } from '../codeGeneration/types'
-import { useButtonText } from '@/contexts/ButtonTextContext'
-import { useEdgeLabel } from '@/contexts/EdgeLabelContext'
-import { Button, Modal as MuiModal, ModalDialog, Snackbar } from '@mui/joy'
-import { X } from 'lucide-react'
+import { edgeTypes, initialEdges, type CustomEdgeType } from './edges'
+import { initialNodes, nodeTypes, type CustomNodeType } from './nodes'
 
+import { ComponentList } from './ComponentsList'
 import GenericModal from './GenericModal'
 
 export default function App() {
@@ -42,6 +43,8 @@ export default function App() {
   const { edgeLabels, updateEdgeLabel } = useEdgeLabel()
   const [snackbarOpen, setSnackbarOpen] = useState(false)
   const [snackbarMessage, setSnackbarMessage] = useState('')
+
+  const [mode, setMode] = useState<undefined | 'node' | 'edge' | 'conditionalEdge'>()
 
   const nodesRef = useRef(nodes)
   const edgesRef = useRef(edges)
@@ -214,7 +217,7 @@ export default function App() {
         id: edgeId,
         markerEnd: { type: MarkerType.ArrowClosed },
         type: 'self-connecting-edge',
-        animated: connection.source === connection.target,
+        animated: connection.source === connection.target || mode === 'conditionalEdge',
         label: defaultLabel,
       }
       setEdges((prevEdges) => {
@@ -234,8 +237,9 @@ export default function App() {
         return updatedEdges
       })
       setIsConnecting(false)
+      setMode(undefined)
     },
-    [setEdges, edges, buttonTexts, updateEdgeLabel, edgeLabels, maxEdgeLength],
+    [setEdges, edges, buttonTexts, updateEdgeLabel, edgeLabels, maxEdgeLength, setMode, mode],
   )
 
   const addNode = useCallback(
@@ -281,11 +285,12 @@ export default function App() {
   const handlePaneClick = useCallback(
     (event: React.MouseEvent) => {
       const isCmdOrCtrlPressed = event.metaKey || event.ctrlKey
-      if (isCmdOrCtrlPressed) {
+      if (isCmdOrCtrlPressed || mode === 'node') {
         addNode(event)
+        setMode(undefined)
       }
     },
-    [addNode],
+    [addNode, mode],
   )
 
   const handleCodeTypeSelection = (type: 'js' | 'python') => {
@@ -323,6 +328,32 @@ export default function App() {
     [setEdges],
   )
 
+  const nodesWithMode = useMemo(() => {
+    return nodes.map((node) => {
+      return {
+        ...node,
+        data: { ...node.data, isEdgeMode: mode === 'edge' || mode === 'conditionalEdge' },
+      }
+    })
+  }, [nodes, mode])
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'd') {
+        setMode((prevMode) => (prevMode === 'node' ? undefined : 'node'))
+      } else if (event.key === 'e') {
+        setMode((prevMode) => (prevMode === 'edge' ? undefined : 'edge'))
+      } else if (event.key === 'c') {
+        setMode((prevMode) => (prevMode === 'conditionalEdge' ? undefined : 'conditionalEdge'))
+      } else if (event.key === 'Escape') {
+        setMode(undefined)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   return (
     <div>
       <Snackbar
@@ -352,7 +383,7 @@ export default function App() {
 
       <div ref={reactFlowWrapper} className='z-10 no-scrollbar no-select' style={{ width: '100vw', height: '100vh' }}>
         <ReactFlow<CustomNodeType, CustomEdgeType>
-          nodes={nodes}
+          nodes={nodesWithMode}
           nodeTypes={nodeTypes}
           onEdgeClick={onEdgeClick}
           onNodesChange={handleNodesChange}
@@ -361,6 +392,7 @@ export default function App() {
               ...edge,
               data: {
                 ...edge.data,
+                mode: mode,
               },
             }
           })}
@@ -433,6 +465,7 @@ export default function App() {
             <div className='flex justify-center'></div>
           </ModalDialog>
         </MuiModal>
+        <ComponentList toggleMode={setMode} mode={mode} />
         <div className='flex rounded py-2 px-4 flex-col absolute bottom-16 right-5'>
           <div className='text-white font-bold text-center'> {'Generate Code'}</div>
           <div className='flex flex-row gap-2 pt-3'>
