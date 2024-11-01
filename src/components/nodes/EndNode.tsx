@@ -1,10 +1,15 @@
+import type { Node, NodeProps } from '@xyflow/react'
 import { Handle, Position } from '@xyflow/react'
-import type { Node } from '@xyflow/react'
 import { useMemo } from 'react'
 
-export type EndNode = Node
+export type EndNodeData = {
+  label: string
+  isEdgeMode: boolean
+}
 
-export default function EndNode() {
+export type EndNode = Node<EndNodeData>
+
+export default function EndNode({ data }: NodeProps<EndNode>) {
   const randomBorderColor = useMemo(() => {
     const hue = Math.floor(Math.random() * 360)
     const saturation = 70 + Math.random() * 30
@@ -20,7 +25,11 @@ export default function EndNode() {
       <div className='p-3 px-8 rounded-3xl' style={{ color: randomBorderColor, backgroundColor: `rgba(26,26,36,0.8)` }}>
         __end__
       </div>
-      <Handle type='target' style={{ width: '10px', height: '10px' }} position={Position.Top} />
+      <Handle
+        type='target'
+        style={{ width: data.isEdgeMode ? '20px' : '10px', height: data.isEdgeMode ? '20px' : '10px' }}
+        position={Position.Top}
+      />
     </div>
   )
 }
