@@ -15,16 +15,20 @@ const ColorPicker = ({
   color,
   onChange,
   onClose,
+  isAnimated,
+  onAnimationToggle,
 }: {
   color: string
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
   onClose: () => void
+  isAnimated: boolean
+  onAnimationToggle: () => void
 }) => {
   return createPortal(
     <div className='fixed bottom-5 left-5 z-50' style={{ width: '280px' }}>
       <div className='flex flex-col gap-3 bg-white p-4 rounded-lg shadow-xl'>
         <div className='flex justify-between items-center'>
-          <span className='text-sm font-semibold text-gray-800'>Set edge color</span>
+          <span className='text-sm font-semibold text-gray-800'>Edge Settings</span>
           <button
             onClick={onClose}
             className='text-sm bg-slate-800 hover:bg-slate-900 text-slate-100 py-1 px-2 rounded-md'
@@ -45,6 +49,21 @@ const ColorPicker = ({
               <code className='text-sm font-mono text-gray-700'>{color.toUpperCase()}</code>
             </div>
           </div>
+        </div>
+        <div className='flex items-center justify-between mt-2 px-1'>
+          <span className='text-sm text-gray-700'>Conditional</span>
+          <button
+            onClick={onAnimationToggle}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              isAnimated ? 'bg-slate-800' : 'bg-gray-200'
+            }`}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                isAnimated ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
         </div>
       </div>
     </div>,
@@ -96,13 +115,7 @@ export default function SelfConnectingEdge(props: SelfConnectingEdgeProps) {
   }, [edgeLabels, source])
 
   const handleSvgClick = () => {
-    if (activeEdgeId === id) {
-      // If this edge is already active, close its color picker
-      setActiveEdgeId(null)
-    } else {
-      // Otherwise, set this edge as the active one
-      setActiveEdgeId(id)
-    }
+    setActiveEdgeId(id)
   }
 
   const handleLabelClick = (e: React.MouseEvent) => {
@@ -169,6 +182,14 @@ export default function SelfConnectingEdge(props: SelfConnectingEdgeProps) {
 
   const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEdgeColor(e.target.value)
+    // Update edge color in React Flow
+    setEdges((eds) =>
+      eds.map((edge) => (edge.id === id ? { ...edge, data: { ...edge.data, color: e.target.value } } : edge)),
+    )
+  }
+
+  const handleAnimationToggle = () => {
+    setEdges((eds) => eds.map((edge) => (edge.id === id ? { ...edge, animated: !edge.animated } : edge)))
   }
 
   if (props.source !== props.target) {
@@ -220,7 +241,13 @@ export default function SelfConnectingEdge(props: SelfConnectingEdgeProps) {
             }}
           />
           {isColorPickerActive && (
-            <ColorPicker color={edgeColor} onChange={handleColorChange} onClose={() => setActiveEdgeId(null)} />
+            <ColorPicker
+              color={edgeColor}
+              onChange={handleColorChange}
+              onClose={() => setActiveEdgeId(null)}
+              isAnimated={!!animated}
+              onAnimationToggle={handleAnimationToggle}
+            />
           )}
           {animated &&
             (editingEdgeId === id ? (
@@ -328,7 +355,13 @@ export default function SelfConnectingEdge(props: SelfConnectingEdgeProps) {
           }}
         />
         {isColorPickerActive && (
-          <ColorPicker color={edgeColor} onChange={handleColorChange} onClose={() => setActiveEdgeId(null)} />
+          <ColorPicker
+            color={edgeColor}
+            onChange={handleColorChange}
+            onClose={() => setActiveEdgeId(null)}
+            isAnimated={!!animated}
+            onAnimationToggle={handleAnimationToggle}
+          />
         )}
         {animated &&
           (editingEdgeId === id ? (
