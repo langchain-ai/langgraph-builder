@@ -94,21 +94,41 @@ export default function SelfConnectingEdge(props: SelfConnectingEdgeProps) {
   const { edgeLabels, updateEdgeLabel } = useEdgeLabel()
   const [currentLabel, setCurrentLabel] = useState(edgeLabels[source])
   const { editingEdgeId, setEditingEdgeId } = useContext(EditingContext)
-  const [labelWidth, setLabelWidth] = useState(97)
+  const [labelWidth, setLabelWidth] = useState(130)
   const [edgeColor, setEdgeColor] = useState('#BDBDBD')
   const labelRef = useRef<HTMLDivElement>(null)
+  const measureRef = useRef<HTMLDivElement | null>(null)
 
-  // Use the shared context
   const { activeEdgeId, setActiveEdgeId } = useContext(ColorEditingContext)
 
-  // Is this edge's color picker active?
   const isColorPickerActive = activeEdgeId === id
 
-  useLayoutEffect(() => {
-    if (labelRef.current) {
-      setLabelWidth(labelRef.current.offsetWidth)
+  // Add a measuring div to the DOM
+  useEffect(() => {
+    const div = document.createElement('div')
+    div.style.position = 'absolute'
+    div.style.visibility = 'hidden'
+    div.style.whiteSpace = 'nowrap'
+    div.style.fontSize = '12px'
+    div.style.fontFamily = 'inherit'
+    document.body.appendChild(div)
+    measureRef.current = div
+
+    return () => {
+      if (measureRef.current) {
+        document.body.removeChild(measureRef.current)
+      }
     }
-  }, [edgeLabels[source], label])
+  }, [])
+
+  useEffect(() => {
+    if (measureRef.current) {
+      const textToMeasure = String(edgeLabels[source] || label || ' ')
+      measureRef.current.textContent = textToMeasure
+      const width = measureRef.current.offsetWidth
+      setLabelWidth(width + 30)
+    }
+  }, [edgeLabels[source], label, source])
 
   useEffect(() => {
     setCurrentLabel(edgeLabels[source])
@@ -257,7 +277,7 @@ export default function SelfConnectingEdge(props: SelfConnectingEdgeProps) {
                 }}
                 x={midX - (labelWidth + 20) / 2}
                 y={midY - 17.5}
-                width={Math.max(labelWidth + 20, 50)}
+                width={Math.max(labelWidth, 50)}
                 height={35}
                 onDoubleClick={handleForeignObjectDoubleClick}
               >
@@ -288,7 +308,7 @@ export default function SelfConnectingEdge(props: SelfConnectingEdgeProps) {
                 }}
                 x={midX - (labelWidth + 20) / 2}
                 y={midY - 17.5}
-                width={Math.max(labelWidth + 20, 50)}
+                width={Math.max(labelWidth, 50)}
                 height={35}
                 onDoubleClick={handleForeignObjectDoubleClick}
               >
@@ -371,7 +391,7 @@ export default function SelfConnectingEdge(props: SelfConnectingEdgeProps) {
               }}
               x={sourceX}
               y={sourceY}
-              width={Math.max(labelWidth + 20, 50)}
+              width={Math.max(labelWidth, 50)}
               height={35}
               onDoubleClick={handleForeignObjectDoubleClick}
             >
@@ -402,7 +422,7 @@ export default function SelfConnectingEdge(props: SelfConnectingEdgeProps) {
               }}
               x={sourceX}
               y={sourceY}
-              width={Math.max(labelWidth + 20, 50)}
+              width={Math.max(labelWidth, 50)}
               height={35}
               onDoubleClick={handleForeignObjectDoubleClick}
             >

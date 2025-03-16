@@ -114,7 +114,10 @@ export default function App() {
   }, [])
 
   const MockColorPicker = () => (
-    <div className={`fixed bottom-5 cursor-disabled left-5 z-50 ${!initialOnboardingComplete ? 'cursor-not-allowed' : ''}`} style={{ width: '280px' }}>
+    <div
+      className={`fixed bottom-5 cursor-disabled left-5 z-50 ${!initialOnboardingComplete ? 'cursor-not-allowed' : ''}`}
+      style={{ width: '280px' }}
+    >
       <div className='flex flex-col gap-3 bg-white p-4 rounded-lg shadow-xl'>
         <div className='flex justify-between items-center'>
           <span className='text-sm font-semibold text-gray-800'>Set edge color</span>
@@ -154,10 +157,6 @@ export default function App() {
   useEffect(() => {
     nodesRef.current = nodes
     edgesRef.current = edges
-    
-    // Log changes to nodes and edges
-    console.log('Graph nodes updated:', nodes);
-    console.log('Graph edges updated:', edges);
   }, [nodes, edges])
 
   useEffect(() => {
@@ -184,7 +183,7 @@ export default function App() {
       title: '1 of 7: How to create a node',
       content: '⌘ + click anywhere on the canvas to create a node. Nodes can have custom labels',
       targetNodeId: 'custom1',
-      tooltipOffset: { x: -10, y: 0 },
+      tooltipOffset: { x: 0, y: 0 },
       nodes: [
         { id: 'source', type: 'source', position: { x: 0, y: 0 }, data: { label: 'source' } },
         { id: 'end', type: 'end', position: { x: 0, y: 600 }, data: { label: 'end' } },
@@ -233,7 +232,7 @@ export default function App() {
           animated: true,
           markerEnd: { type: MarkerType.ArrowClosed },
           type: 'self-connecting-edge',
-          label: 'conditional_edge',
+          label: 'conditional_edge_1',
         },
         {
           id: 'custom1->custom3',
@@ -242,7 +241,7 @@ export default function App() {
           animated: true,
           markerEnd: { type: MarkerType.ArrowClosed },
           type: 'self-connecting-edge',
-          label: 'conditional_edge',
+          label: 'conditional_edge_1',
         },
         { id: 'custom2->end', source: 'custom2', target: 'end', markerEnd: { type: MarkerType.ArrowClosed } },
         { id: 'custom3->end', source: 'custom3', target: 'end', markerEnd: { type: MarkerType.ArrowClosed } },
@@ -251,11 +250,11 @@ export default function App() {
     {
       key: 'tooltip4',
       type: 'tooltip',
-      placement: 'bottom' as TooltipPlacement,
+      placement: 'left' as TooltipPlacement,
       title: '4 of 7: How to create a cycle',
       content: 'Create a loop by dragging from the bottom of one node to the top of itself',
       targetNodeId: 'custom3',
-      tooltipOffset: { x: 0, y: 60 },
+      tooltipOffset: { x: -10, y: 0 },
       nodes: [
         { id: 'source', type: 'source', position: { x: 0, y: 0 }, data: { label: 'source' } },
         { id: 'end', type: 'end', position: { x: 0, y: 600 }, data: { label: 'end' } },
@@ -270,7 +269,7 @@ export default function App() {
           source: 'custom1',
           target: 'custom2',
           animated: true,
-          label: 'conditional_edge',
+          label: 'conditional_edge_1',
           markerEnd: { type: MarkerType.ArrowClosed },
           type: 'self-connecting-edge',
         },
@@ -279,18 +278,26 @@ export default function App() {
           source: 'custom1',
           target: 'custom3',
           animated: true,
-          label: 'conditional_edge',
+          label: 'conditional_edge_1',
           markerEnd: { type: MarkerType.ArrowClosed },
           type: 'self-connecting-edge',
         },
         { id: 'custom2->end', source: 'custom2', target: 'end', markerEnd: { type: MarkerType.ArrowClosed } },
-        { id: 'custom3->end', source: 'custom3', target: 'end', markerEnd: { type: MarkerType.ArrowClosed } },
+        {
+          id: 'custom3->end',
+          source: 'custom3',
+          animated: true,
+          label: 'conditional_edge_2',
+          target: 'end',
+          type: 'self-connecting-edge',
+          markerEnd: { type: MarkerType.ArrowClosed },
+        },
         {
           id: 'custom1->custom1',
           source: 'custom3',
           target: 'custom3',
           animated: true,
-          label: 'cycle',
+          label: 'conditional_edge_2',
           type: 'self-connecting-edge',
           markerEnd: { type: MarkerType.ArrowClosed },
         },
@@ -319,7 +326,7 @@ export default function App() {
           source: 'custom1',
           target: 'custom2',
           animated: true,
-          label: 'conditional_edge',
+          label: 'conditional_edge_1',
           markerEnd: { type: MarkerType.ArrowClosed },
           type: 'self-connecting-edge',
         },
@@ -328,18 +335,31 @@ export default function App() {
           source: 'custom1',
           target: 'custom3',
           animated: true,
-          label: 'conditional_edge',
+          label: 'conditional_edge_1',
           markerEnd: { type: MarkerType.ArrowClosed },
           type: 'self-connecting-edge',
         },
-        { id: 'custom2->end', source: 'custom2', target: 'end', markerEnd: { type: MarkerType.ArrowClosed } },
-        { id: 'custom3->end', source: 'custom3', target: 'end', markerEnd: { type: MarkerType.ArrowClosed } },
+        {
+          id: 'custom2->end',
+          source: 'custom2',
+          target: 'end',
+          markerEnd: { type: MarkerType.ArrowClosed },
+        },
+        {
+          id: 'custom3->end',
+          source: 'custom3',
+          animated: true,
+          label: 'conditional_edge_2',
+          type: 'self-connecting-edge',
+          target: 'end',
+          markerEnd: { type: MarkerType.ArrowClosed },
+        },
         {
           id: 'custom1->custom1',
           source: 'custom3',
           target: 'custom3',
           animated: true,
-          label: 'cycle',
+          label: 'conditional_edge_2',
           type: 'self-connecting-edge',
           markerEnd: { type: MarkerType.ArrowClosed },
         },
@@ -367,7 +387,7 @@ export default function App() {
           source: 'custom1',
           target: 'custom2',
           animated: true,
-          label: 'conditional_edge',
+          label: 'conditional_edge_1',
           markerEnd: { type: MarkerType.ArrowClosed },
           type: 'self-connecting-edge',
         },
@@ -376,18 +396,26 @@ export default function App() {
           source: 'custom1',
           target: 'custom3',
           animated: true,
-          label: 'conditional_edge',
+          label: 'conditional_edge_1',
           markerEnd: { type: MarkerType.ArrowClosed },
           type: 'self-connecting-edge',
         },
         { id: 'custom2->end', source: 'custom2', target: 'end', markerEnd: { type: MarkerType.ArrowClosed } },
-        { id: 'custom3->end', source: 'custom3', target: 'end', markerEnd: { type: MarkerType.ArrowClosed } },
+        {
+          id: 'custom3->end',
+          source: 'custom3',
+          target: 'end',
+          animated: true,
+          label: 'conditional_edge_2',
+          type: 'self-connecting-edge',
+          markerEnd: { type: MarkerType.ArrowClosed },
+        },
         {
           id: 'custom1->custom1',
           source: 'custom3',
           target: 'custom3',
           animated: true,
-          label: 'cycle',
+          label: 'conditional_edge_2',
           type: 'self-connecting-edge',
           markerEnd: { type: MarkerType.ArrowClosed },
         },
@@ -418,7 +446,7 @@ export default function App() {
           source: 'custom1',
           target: 'custom2',
           animated: true,
-          label: 'conditional_edge',
+          label: 'conditional_edge_1',
           markerEnd: { type: MarkerType.ArrowClosed },
           type: 'self-connecting-edge',
         },
@@ -427,18 +455,26 @@ export default function App() {
           source: 'custom1',
           target: 'custom3',
           animated: true,
-          label: 'conditional_edge',
+          label: 'conditional_edge_1',
           markerEnd: { type: MarkerType.ArrowClosed },
           type: 'self-connecting-edge',
         },
         { id: 'custom2->end', source: 'custom2', target: 'end', markerEnd: { type: MarkerType.ArrowClosed } },
-        { id: 'custom3->end', source: 'custom3', target: 'end', markerEnd: { type: MarkerType.ArrowClosed } },
+        {
+          id: 'custom3->end',
+          source: 'custom3',
+          animated: true,
+          label: 'conditional_edge_2',
+          type: 'self-connecting-edge',
+          target: 'end',
+          markerEnd: { type: MarkerType.ArrowClosed },
+        },
         {
           id: 'custom1->custom1',
           source: 'custom3',
           target: 'custom3',
           animated: true,
-          label: 'cycle',
+          label: 'conditional_edge_2',
           type: 'self-connecting-edge',
           markerEnd: { type: MarkerType.ArrowClosed },
         },
@@ -620,8 +656,8 @@ export default function App() {
       : edges
 
   function generateSpec(edges: any, currentLanguage: 'python' | 'typescript' = language): string {
-    // Step 1: Separate normal edges and animated edges, ensure animated is treated as false when undefined
-    const normalEdges: any[] = edges.filter((edge: any) => !edge.animated && edge.animated !== undefined)
+    // Step 1: Separate normal edges and animated edges
+    const normalEdges: any[] = edges.filter((edge: any) => !edge.animated)
     const animatedEdges: any[] = edges.filter((edge: any) => edge.animated === true)
 
     // Step 2: Group animated edges by source
@@ -736,6 +772,7 @@ export default function App() {
         return `${key}: ${value}`
       })
       .join('\n')
+    console.log(yamlString, 'yaml string')
 
     // Add descriptive comment at the top
     const fileExt = currentLanguage === 'python' ? '.py' : '.ts'
@@ -743,7 +780,7 @@ export default function App() {
 # designed in LangGraph Builder (https://build.langchain.com).
 #
 # The YAML was used by langgraph-gen (https://github.com/langchain-ai/langgraph-gen-py) 
-# to generate a code stub for a LangGraph application that follows the architecture
+# to generate a code stub for a LangGraph application that follows the architecture.
 #
 # langgraph-gen is an open source CLI tool that converts YAML specifications into LangGraph code stubs.
 #
@@ -944,21 +981,33 @@ export default function App() {
 
   return (
     <div className='w-screen h-screen'>
-      <div className='absolute top-4 right-4 z-50 flex gap-2'>
+      <div className='absolute top-5 left-5 z-50 flex gap-2'>
         <button
-          onClick={() => initialOnboardingComplete && setIsTemplatesPanelOpen(true)}
+          onClick={() => initialOnboardingComplete && setIsTemplatesPanelOpen(!isTemplatesPanelOpen)}
           className={`flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-md transition-shadow ${
             !initialOnboardingComplete ? 'cursor-not-allowed opacity-70' : 'hover:shadow-lg'
           }`}
           disabled={!initialOnboardingComplete}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-            <line x1="3" y1="9" x2="21" y2="9"></line>
-            <line x1="9" y1="21" x2="9" y2="9"></line>
+          <svg
+            xmlns='http://www.w3.org/2000/svg'
+            width='16'
+            height='16'
+            viewBox='0 0 24 24'
+            fill='none'
+            stroke='currentColor'
+            strokeWidth='2'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+          >
+            <rect x='3' y='3' width='18' height='18' rx='2' ry='2'></rect>
+            <line x1='3' y1='9' x2='21' y2='9'></line>
+            <line x1='9' y1='21' x2='9' y2='9'></line>
           </svg>
           Templates
         </button>
+      </div>
+      <div className='absolute top-5 right-5 z-50 flex gap-2'>
         <div className='flex flex-row gap-2'>
           <Tooltip
             title={
@@ -969,12 +1018,16 @@ export default function App() {
           >
             <button
               className={`py-2 px-3 rounded-md transition-colors duration-200 ${
-                hasValidSourceToEndPath() || (!initialOnboardingComplete && currentOnboardingStep >= 3)
-                  ? 'bg-[#2F6868] cursor-pointer'
-                  : 'bg-gray-500 opacity-70'
-              } ${!initialOnboardingComplete ? 'cursor-not-allowed' : 'hover:bg-[#245757]'}`}
-              onClick={hasValidSourceToEndPath() ? handleGenerateCode : undefined}
-              disabled={!hasValidSourceToEndPath()}
+                !initialOnboardingComplete
+                  ? currentOnboardingStep >= 3
+                    ? 'bg-[#2F6868] cursor-not-allowed opacity-100'
+                    : 'bg-gray-500 opacity-70 cursor-not-allowed'
+                  : hasValidSourceToEndPath()
+                    ? 'bg-[#2F6868] cursor-pointer hover:bg-[#245757]'
+                    : 'bg-gray-500 opacity-70 cursor-not-allowed'
+              }`}
+              onClick={hasValidSourceToEndPath() && initialOnboardingComplete ? handleGenerateCode : undefined}
+              disabled={!hasValidSourceToEndPath() || !initialOnboardingComplete}
             >
               <div className='text-[#333333] font-medium text-center text-slate-100'> {'Generate Code'}</div>
             </button>
@@ -991,14 +1044,11 @@ export default function App() {
           </button>
         </div>
       </div>
-      
+
       {isTemplatesPanelOpen && (
-        <TemplatesPanel
-          onSelectTemplate={handleTemplateSelect}
-          onClose={() => setIsTemplatesPanelOpen(false)}
-        />
+        <TemplatesPanel onSelectTemplate={handleTemplateSelect} onClose={() => setIsTemplatesPanelOpen(false)} />
       )}
-      
+
       <div ref={reactFlowWrapper} className='no-scrollbar no-select' style={{ width: '100vw', height: '100vh' }}>
         <ColorEditingProvider>
           {!initialOnboardingComplete && (
@@ -1069,7 +1119,7 @@ export default function App() {
           {/* Sidebar */}
           <div
             className={`
-            fixed top-0 left-0 bg-gray-100 shadow-xl rounded-md z-20 
+            fixed bottom-0 left-0 bg-white shadow-xl rounded-md z-20 
             transform transition-transform duration-300 
             ${infoPanelOpen ? 'translate-x-0' : '-translate-x-full'}
           `}
@@ -1081,7 +1131,7 @@ export default function App() {
                   className='font-bold text-gray-400 hover:text-gray-600 transition-colors duration-300 ease-in-out'
                   onClick={() => setInfoPanelOpen(false)}
                 >
-                  <X size={30} />
+                  <X size={25} />
                 </button>
               </div>
               <div>
@@ -1222,7 +1272,7 @@ export default function App() {
                             setGenerateCodeModalOpen(false)
                           }}
                         >
-                          <X size={30} />
+                          <X size={25} />
                         </button>
                       </div>
                     </div>
