@@ -641,6 +641,15 @@ export default function App() {
     [setEdges],
   )
 
+  const handleEdgeUnselect = (edgeId: string) => {
+    setEdges((eds) =>
+      eds.map((edge) => ({
+        ...edge,
+        selected: edge.id === edgeId ? false : edge.selected,
+      })),
+    )
+  }
+
   const flowNodes =
     !initialOnboardingComplete &&
     currentOnboardingStep < onboardingSteps.length &&
@@ -653,7 +662,13 @@ export default function App() {
     currentOnboardingStep < onboardingSteps.length &&
     onboardingSteps[currentOnboardingStep].edges
       ? onboardingSteps[currentOnboardingStep].edges
-      : edges
+      : edges.map((edge) => ({
+          ...edge,
+          data: {
+            ...edge.data,
+            onEdgeUnselect: handleEdgeUnselect,
+          },
+        }))
 
   function generateSpec(edges: any, currentLanguage: 'python' | 'typescript' = language): string {
     // Step 1: Separate normal edges and animated edges

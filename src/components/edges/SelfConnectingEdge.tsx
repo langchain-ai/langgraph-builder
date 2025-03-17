@@ -8,6 +8,7 @@ interface SelfConnectingEdgeProps extends EdgeProps {
   data?: {
     onLabelClick: (id: string) => void
     updateEdgeLabel: (id: string, newLabel: string) => void
+    onEdgeUnselect?: (edgeId: string) => void
   }
 }
 
@@ -17,12 +18,14 @@ const ColorPicker = ({
   onClose,
   isAnimated,
   onAnimationToggle,
+  edgeId,
 }: {
   color: string
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
-  onClose: () => void
+  onClose: (edgeId: string) => void
   isAnimated: boolean
   onAnimationToggle: () => void
+  edgeId: string
 }) => {
   return createPortal(
     <div className='fixed bottom-5 left-5 z-50' style={{ width: '280px' }}>
@@ -30,7 +33,10 @@ const ColorPicker = ({
         <div className='flex justify-between items-center'>
           <span className='text-sm font-semibold text-gray-800'>Edge Settings</span>
           <button
-            onClick={onClose}
+            onClick={(e) => {
+              e.stopPropagation()
+              onClose(edgeId)
+            }}
             className='text-sm bg-slate-800 hover:bg-slate-900 text-slate-100 py-1 px-2 rounded-md'
           >
             Done
@@ -264,7 +270,11 @@ export default function SelfConnectingEdge(props: SelfConnectingEdgeProps) {
             <ColorPicker
               color={edgeColor}
               onChange={handleColorChange}
-              onClose={() => setActiveEdgeId(null)}
+              onClose={(edgeId) => {
+                setActiveEdgeId(null)
+                props.data?.onEdgeUnselect?.(edgeId)
+              }}
+              edgeId={id}
               isAnimated={!!animated}
               onAnimationToggle={handleAnimationToggle}
             />
@@ -378,7 +388,11 @@ export default function SelfConnectingEdge(props: SelfConnectingEdgeProps) {
           <ColorPicker
             color={edgeColor}
             onChange={handleColorChange}
-            onClose={() => setActiveEdgeId(null)}
+            onClose={(edgeId) => {
+              setActiveEdgeId(null)
+              props.data?.onEdgeUnselect?.(edgeId)
+            }}
+            edgeId={id}
             isAnimated={!!animated}
             onAnimationToggle={handleAnimationToggle}
           />
