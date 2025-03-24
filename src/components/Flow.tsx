@@ -1279,7 +1279,7 @@ export default function App() {
                           <Download size={18} />
                         </button>
                         <div className='max-w-xs pr-3'>
-                          <MultiButton onSelectionChange={(option) => handleLanguageChange(option)} />
+                          <MultiButton lang={language} onSelectionChange={(option) => handleLanguageChange(option)} />
                         </div>
                         <button
                           className='font-bold pr-3 text-gray-400 hover:text-gray-600 transition-colors duration-300 ease-in-out'
