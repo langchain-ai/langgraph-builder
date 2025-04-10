@@ -11,6 +11,7 @@ import {
   type OnConnect,
   applyNodeChanges,
   type Edge,
+  type ReactFlowInstance
 } from '@xyflow/react'
 import { MarkerType } from 'reactflow'
 import '@xyflow/react/dist/style.css'
@@ -26,6 +27,7 @@ import GenericModal from './GenericModal'
 import { ColorEditingProvider } from './edges/SelfConnectingEdge'
 import JSZip from 'jszip'
 import TemplatesPanel, { type Template } from './ui/TemplatesPanel'
+import { LoadGraphModal } from './LoadGraphModal'
 
 // Loading spinner component
 const LoadingSpinner = () => (
@@ -76,7 +78,7 @@ export default function App() {
   const [generateCodeModalOpen, setGenerateCodeModalOpen] = useState(false)
   const [showOnboardingToast, setShowOnboardingToast] = useState(false)
   const reactFlowWrapper = useRef<any>(null)
-  const [reactFlowInstance, setReactFlowInstance] = useState<any>(null)
+  const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance<Node, Edge> | null>(null)
   const [isConnecting, setIsConnecting] = useState(false)
   const { buttonTexts } = useButtonText()
   const [maxNodeLength, setMaxNodeLength] = useState(0)
@@ -97,6 +99,11 @@ export default function App() {
   const [isMobile, setIsMobile] = useState(false)
   const [generatedYamlSpec, setGeneratedYamlSpec] = useState<string>('')
   const [isTemplatesPanelOpen, setIsTemplatesPanelOpen] = useState(false)
+
+  const [loadGraphModalOpen, setLoadGraphModalOpen] = useState(false)
+  const [graphTitle, setGraphTitle] = useState('Unnamed')
+  const [isGraphDirty, setGraphDirty] = useState(false)
+  
 
   const nodesRef = useRef(nodes)
   const edgesRef = useRef(edges)
@@ -507,6 +514,7 @@ export default function App() {
   const handleNodesChange = useCallback(
     (changes: any) => {
       onNodesChange(changes)
+      setGraphDirty(true)
     },
     [onNodesChange],
   )
@@ -514,6 +522,7 @@ export default function App() {
   const handleEdgesChange = useCallback(
     (changes: any) => {
       onEdgesChange(changes)
+      setGraphDirty(true)
     },
     [onEdgesChange],
   )
@@ -586,31 +595,33 @@ export default function App() {
       if (reactFlowWrapper) {
         const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect()
 
-        const position = reactFlowInstance.screenToFlowPosition({
-          x: event.clientX - reactFlowBounds.left,
-          y: event.clientY - reactFlowBounds.top,
-        })
+        if( reactFlowInstance ) {
+          const position = reactFlowInstance.screenToFlowPosition({
+            x: event.clientX - reactFlowBounds.left,
+            y: event.clientY - reactFlowBounds.top,
+          })
 
-        const newNode: CustomNodeType = {
-          id: `node-${maxNodeLength + 1}`,
-          type: 'custom',
-          position,
-          selected: true,
-          data: { label: `Node ${maxNodeLength + 1}` },
+          const newNode: CustomNodeType = {
+            id: `node-${maxNodeLength + 1}`,
+            type: 'custom',
+            position,
+            selected: true,
+            data: { label: `Node ${maxNodeLength + 1}` },
+          }
+          setMaxNodeLength(maxNodeLength + 1)
+
+          setNodes((prevNodes) => {
+            return applyNodeChanges(
+              [
+                {
+                  type: 'add',
+                  item: newNode,
+                },
+              ],
+              prevNodes,
+            )
+          })
         }
-        setMaxNodeLength(maxNodeLength + 1)
-
-        setNodes((prevNodes) => {
-          return applyNodeChanges(
-            [
-              {
-                type: 'add',
-                item: newNode,
-              },
-            ],
-            prevNodes,
-          )
-        })
       }
     },
     [nodes, setNodes, reactFlowInstance, reactFlowWrapper, isConnecting, applyNodeChanges, maxNodeLength],
@@ -1021,6 +1032,21 @@ export default function App() {
           </svg>
           Templates
         </button>
+
+        <LoadGraphButton  onClick={() => setLoadGraphModalOpen(true)} 
+                          initialOnboardingComplete={initialOnboardingComplete} />
+
+        <SaveGraphButton  enabled={isGraphDirty}
+                          onSaved={() => setGraphDirty(false)} 
+                          initialOnboardingComplete={initialOnboardingComplete} 
+                          reactFlowInstance={reactFlowInstance}
+                          title={graphTitle}
+                          nodes={nodes}
+                          edges={edges}
+                          />
+        <TitleInput title={graphTitle} 
+                    savePending={isGraphDirty} 
+                    onChange={ newTitle => setGraphTitle(newTitle) } />
       </div>
       <div className='absolute top-5 right-5 z-50 flex gap-2'>
         <div className='flex flex-row gap-2'>
@@ -1279,7 +1305,7 @@ export default function App() {
                           <Download size={18} />
                         </button>
                         <div className='max-w-xs pr-3'>
-                          <MultiButton onSelectionChange={(option) => handleLanguageChange(option)} />
+                          <MultiButton lang={language} onSelectionChange={(option) => handleLanguageChange(option)} />
                         </div>
                         <button
                           className='font-bold pr-3 text-gray-400 hover:text-gray-600 transition-colors duration-300 ease-in-out'
@@ -1359,6 +1385,166 @@ export default function App() {
           </MuiModal>
         </div>
       </div>
+        <LoadGraphModal isOpen={loadGraphModalOpen} 
+                        onClose={() => setLoadGraphModalOpen(false)} 
+                        onLoadGraph={ data => {
+                            setGraphTitle(data.name)
+                            setNodes( data.nodes )
+                            setEdges( data.edges )
+                            reactFlowInstance?.setViewport( data.viewport )
+                        }} />
     </div>
   )
+}
+
+////////////////////////////////////////////////////////////////////////////
+// SaveGraphButton
+////////////////////////////////////////////////////////////////////////////
+
+type SaveGraphButtonProps = {
+  enabled: boolean,
+  onSaved: () => void,
+  initialOnboardingComplete: boolean | null
+  reactFlowInstance: ReactFlowInstance | null,
+  title: string,
+  nodes: CustomNodeType[],
+  edges: CustomEdgeType[]
+}
+
+const SaveGraphButton = ({ 
+  enabled,
+  onSaved,
+  title, 
+  initialOnboardingComplete, 
+  reactFlowInstance, 
+  nodes, 
+  edges }: SaveGraphButtonProps ) => {
+
+  const [isSaving, setIsSaving] = useState(false) 
+
+return  <button
+  onClick={async () => {
+    
+    if (!reactFlowInstance) return
+
+    const viewport = reactFlowInstance.getViewport()
+    try {
+      setIsSaving(true)
+      const response = await fetch('/api/save-graph', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: title,
+          nodes,
+          edges,
+          viewport,
+        }),
+      })
+      const result = await response.json()
+      onSaved()
+      console.log('Graph saved:', result)
+    } catch (error) {
+      console.error('Error saving graph:', error)
+    } finally {
+      setIsSaving(false)
+    }
+  }}
+  className={`flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-md transition-shadow ${
+    !initialOnboardingComplete || !enabled ? 'cursor-not-allowed opacity-70' : 'hover:shadow-lg'
+  }`}
+  disabled={!initialOnboardingComplete || !enabled}
+>
+  {isSaving ? (
+      <div className="w-4 h-4 border-2 border-[#2F6868] border-t-transparent rounded-full animate-spin" />
+  ) : (
+      <svg
+        xmlns='http://www.w3.org/2000/svg'
+        width='16'
+        height='16'
+        viewBox='0 0 24 24'
+        fill='none'
+        stroke='currentColor'
+        strokeWidth='2'
+        strokeLinecap='round'
+        strokeLinejoin='round'
+      >
+        <path d='M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z'></path>
+        <polyline points='17 21 17 13 7 13 7 21'></polyline>
+        <polyline points='7 3 7 8 15 8'></polyline>
+      </svg>
+  )}
+  Save
+</button>
+}
+
+////////////////////////////////////////////////////////////////////////////
+// LoadGraphButton
+////////////////////////////////////////////////////////////////////////////
+
+type LoadGraphButtonProps = {
+  onClick: () => void,
+  initialOnboardingComplete: boolean | null
+}
+
+const LoadGraphButton = ({ initialOnboardingComplete, onClick }: LoadGraphButtonProps ) => {
+
+return <button
+  onClick={onClick}
+  className={`flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-md transition-shadow ${
+    !initialOnboardingComplete ? 'cursor-not-allowed opacity-70' : 'hover:shadow-lg'
+  }`}
+  disabled={!initialOnboardingComplete}
+  >
+    <svg
+    xmlns='http://www.w3.org/2000/svg'
+    width='16'
+    height='16'
+    viewBox='0 0 24 24'
+    fill='none'
+    stroke='currentColor'
+    strokeWidth='2'
+    strokeLinecap='round'
+    strokeLinejoin='round'
+    >
+      <path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/> 
+      <polyline points='17 8 12 3 7 8'/> 
+      <line x1='12' y1='3' x2='12' y2='15'/>
+    </svg>
+  Load
+</button>
+
+}
+
+////////////////////////////////////////////////////////////////////////////
+// TitleInput
+////////////////////////////////////////////////////////////////////////////
+
+type TitleInputProps = {
+  savePending: boolean,
+  title: string,
+  onChange: (title: string) => void
+}
+
+const TitleInput = ({ savePending, title, onChange }: TitleInputProps ) => {
+  const [focused, setFocused] = useState(false)
+
+  return (
+    <div className="flex items-center">
+      {savePending && <span className="ml-1 text-2xl text-gray-600">*</span>}
+      <input
+        type="text"
+        placeholder="Graph Title"
+        className={`px-3 py-2 text-lg rounded-md transition-all duration-150 outline-none bg-transparent ${
+          focused ? 'border border-[#2F6868]' : 'border-transparent'
+        } ${savePending ? 'italic text-gray-600' : ''}`}
+        value={title}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+      />
+    </div>
+  )
+
 }
