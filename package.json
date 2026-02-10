@@ -33,7 +33,7 @@
     "is-ci": "^3.0.1",
     "jszip": "^3.10.1",
     "lucide-react": "^0.453.0",
-    "next": "^13.4.11",
+    "next": "^16.1.6",
     "openai": "^4.57.0",
     "posthog-js": "^1.120.2",
     "prism-react-renderer": "^2.4.1",
